@@ -41,8 +41,7 @@ final class DefaultBrowserService: ObservableObject {
     /// the same browser already counts as the default.
     func isCurrent(_ browser: DefaultBrowserSupport.Browser) -> Bool {
         guard let current else { return false }
-        return Bundle(url: current)?.bundleIdentifier == browser.bundleID
-            || current.standardizedFileURL == browser.url
+        return isSame(browser, current)
     }
 
     func switchToNext() {
@@ -63,6 +62,7 @@ final class DefaultBrowserService: ObservableObject {
         guard !changing else { return }
         changing = true
         failure = nil
+        let previous = current
         Task { @MainActor in
             do {
                 try await DefaultBrowserSupport.makeDefault(browser.url)
@@ -70,6 +70,7 @@ final class DefaultBrowserService: ObservableObject {
                 // process with the previous browser, so it is not read back.
                 current = browser.url
                 changing = false
+                announce(from: previous, to: browser)
             } catch {
                 if !DefaultBrowserSupport.isCancellation(error) { failure = error.localizedDescription }
                 changing = false
@@ -77,5 +78,19 @@ final class DefaultBrowserService: ObservableObject {
                 reload()
             }
         }
+    }
+
+    /// The island shows the switch as the first browser's icon and name, an
+    /// arrow, and the second's.
+    private func announce(from previous: URL?, to browser: DefaultBrowserSupport.Browser) {
+        guard let previous else { return }
+        let name = browsers.first { isSame($0, previous) }?.name
+            ?? previous.deletingPathExtension().lastPathComponent
+        NotchService.shared.show(NotchNotice(event: .defaultBrowser, title: name, detail: browser.name,
+                                             symbol: "globe", apps: [previous, browser.url]))
+    }
+
+    private func isSame(_ browser: DefaultBrowserSupport.Browser, _ url: URL) -> Bool {
+        Bundle(url: url)?.bundleIdentifier == browser.bundleID || url.standardizedFileURL == browser.url
     }
 }

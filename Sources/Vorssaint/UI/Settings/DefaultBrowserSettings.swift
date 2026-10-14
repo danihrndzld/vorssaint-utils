@@ -10,6 +10,7 @@ struct DefaultBrowserSettings: View {
     @ObservedObject private var l10n = L10n.shared
     @ObservedObject private var service = DefaultBrowserService.shared
     @AppStorage(DefaultsKey.defaultBrowserShortcutEnabled) private var shortcutEnabled = false
+    @AppStorage(DefaultsKey.notchDefaultBrowser) private var islandNotice = true
     @State private var rotation: [String] = []
 
     private var strings: DefaultBrowserFeatureStrings { FeatureStrings.defaultBrowser(l10n.language) }
@@ -62,6 +63,7 @@ struct DefaultBrowserSettings: View {
                 Text(strings.rotationCaption)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Toggle(strings.islandNotice, isOn: $islandNotice)
             } header: {
                 Text(strings.nextBrowser)
             }

@@ -59,10 +59,25 @@ enum DefaultBrowserTests {
                 && SettingsBackupSupport.exportKeys().contains(DefaultsKey.defaultBrowserRotation),
                "the shortcut starts off and the chosen browsers travel with settings backup")
 
+        let island = UserDefaults(suiteName: "com.vorssaint.tests.default-browser-island")!
+        island.removePersistentDomain(forName: "com.vorssaint.tests.default-browser-island")
+        island.register(defaults: Defaults.registeredDefaults)
+        island.set(true, forKey: DefaultsKey.notchEnabled)
+        island.set(true, forKey: AppFeature.notch.availabilityKey)
+        island.set(true, forKey: AppFeature.defaultBrowser.availabilityKey)
+        let announces = NotchSupport.routes(.defaultBrowser, in: island)
+        island.set(false, forKey: DefaultsKey.notchDefaultBrowser)
+        let silenced = !NotchSupport.routes(.defaultBrowser, in: island)
+        island.set(true, forKey: DefaultsKey.notchDefaultBrowser)
+        island.set(false, forKey: AppFeature.defaultBrowser.availabilityKey)
+        suite.expect(announces && silenced && !NotchSupport.routes(.defaultBrowser, in: island),
+               "the island shows a switch only with its toggle and the feature on")
+        island.removePersistentDomain(forName: "com.vorssaint.tests.default-browser-island")
+
         for lang in AppLanguage.allCases {
             let s = FeatureStrings.defaultBrowser(lang)
             suite.expect([s.title, s.hubDescription, s.current, s.none, s.makeDefault, s.isDefault,
-                          s.empty, s.confirmNote, s.nextBrowser, s.inRotation, s.rotationCaption, s.panelCaption].allSatisfy { !$0.isEmpty },
+                          s.empty, s.confirmNote, s.nextBrowser, s.inRotation, s.rotationCaption, s.panelCaption, s.islandNotice].allSatisfy { !$0.isEmpty },
                    "default browser strings are filled in for \(lang)")
         }
     }
