@@ -51,6 +51,18 @@ enum DefaultBrowserSupport {
         return !webTypes.contains { ["Alternate", "None"].contains($0["LSHandlerRank"] as? String ?? "") }
     }
 
+    /// The browser the shortcut switches to: the one after `current` among
+    /// the chosen browsers that are still installed, wrapping around. With
+    /// nothing chosen, every installed browser takes part. Nil when there is
+    /// no other browser to switch to.
+    static func next(after current: String?, chosen: [String], installed: [String]) -> String? {
+        let candidates = chosen.isEmpty ? installed : chosen.filter(installed.contains)
+        guard !candidates.isEmpty else { return nil }
+        let next = current.flatMap(candidates.firstIndex(of:)).map { candidates[($0 + 1) % candidates.count] }
+            ?? candidates[0]
+        return next == current ? nil : next
+    }
+
     /// Makes `appURL` open http and https links. macOS asks the user to
     /// confirm each scheme it changes; https is set on its own only when it
     /// did not already follow http. Launch Services records the handler by

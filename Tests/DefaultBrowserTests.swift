@@ -40,10 +40,29 @@ enum DefaultBrowserTests {
             at: hidden, info: ["CFBundleURLTypes": [web(["https"])]], htmlViewers: viewers),
             "a test browser kept in a hidden folder is not offered")
 
+        let installed = ["zen", "chrome", "safari"]
+        suite.expect(DefaultBrowserSupport.next(after: "zen", chosen: ["zen", "safari"], installed: installed) == "safari"
+                && DefaultBrowserSupport.next(after: "safari", chosen: ["zen", "safari"], installed: installed) == "zen",
+               "the shortcut moves to the next chosen browser and wraps around")
+        suite.expect(DefaultBrowserSupport.next(after: "chrome", chosen: ["zen", "safari"], installed: installed) == "zen"
+                && DefaultBrowserSupport.next(after: nil, chosen: ["zen", "safari"], installed: installed) == "zen",
+               "a default outside the chosen browsers switches to the first chosen one")
+        suite.expect(DefaultBrowserSupport.next(after: "zen", chosen: [], installed: installed) == "chrome",
+               "with nothing chosen the shortcut goes through every installed browser")
+        suite.expect(DefaultBrowserSupport.next(after: "zen", chosen: ["zen", "tor", "safari"], installed: installed) == "safari",
+               "a chosen browser that is no longer installed is skipped")
+        suite.expect(DefaultBrowserSupport.next(after: "zen", chosen: ["zen"], installed: installed) == nil
+                && DefaultBrowserSupport.next(after: "zen", chosen: ["tor"], installed: installed) == nil,
+               "with no other chosen browser installed there is nothing to switch to")
+        suite.expect(Defaults.registeredDefaults[DefaultsKey.defaultBrowserShortcutEnabled] as? Bool == false
+                && (Defaults.registeredDefaults[DefaultsKey.defaultBrowserRotation] as? [String])?.isEmpty == true
+                && SettingsBackupSupport.exportKeys().contains(DefaultsKey.defaultBrowserRotation),
+               "the shortcut starts off and the chosen browsers travel with settings backup")
+
         for lang in AppLanguage.allCases {
             let s = FeatureStrings.defaultBrowser(lang)
             suite.expect([s.title, s.hubDescription, s.current, s.none, s.makeDefault, s.isDefault,
-                          s.empty, s.confirmNote].allSatisfy { !$0.isEmpty },
+                          s.empty, s.confirmNote, s.nextBrowser, s.inRotation, s.rotationCaption, s.panelCaption].allSatisfy { !$0.isEmpty },
                    "default browser strings are filled in for \(lang)")
         }
     }
