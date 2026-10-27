@@ -1446,6 +1446,18 @@ enum NotchEvent: String, CaseIterable {
     }
 }
 
+/// A switch from one app to another, read below the camera.
+enum NotchSwitchLayout {
+    static let iconSize: CGFloat = 20
+    static let spacing: CGFloat = 6
+    static let arrowWidth: CGFloat = 12
+    static let rowHeight: CGFloat = 24
+    static let bottomInset: CGFloat = 12
+    static let horizontalInset: CGFloat = 20
+    /// Everything on the line but the two names.
+    static let fixedWidth = iconSize * 2 + arrowWidth + spacing * 4 + 8
+}
+
 enum NotchSupport {
     /// Whether a connected display has a camera housing, wherever the island
     /// is: it can be off, withdrawn with the lid closed or on another display.
@@ -2293,6 +2305,13 @@ struct NotchGeometry: Equatable {
     func noticeWings(_ preferred: NotchNoticeWings) -> NotchNoticeWings {
         NotchNoticeWings(leading: noticeWingWidth(preferred: preferred.leading),
                          trailing: noticeWingWidth(preferred: preferred.trailing))
+    }
+
+    /// A switch drops below the camera, as wide as its line needs.
+    func switchNoticeSize(contentWidth: CGFloat) -> CGSize {
+        let width = max(cameraWidth + 40, contentWidth + NotchSwitchLayout.horizontalInset * 2)
+        return CGSize(width: min(screen.width - 24, width),
+                      height: safeContentTop + NotchSwitchLayout.rowHeight + NotchSwitchLayout.bottomInset)
     }
 
     func noticeSize(wings preferred: NotchNoticeWings) -> CGSize {
